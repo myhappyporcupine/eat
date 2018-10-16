@@ -1,3 +1,11 @@
+const width = 40;
+const height = 30;
+const stepsPerFrame = 5;
+const plantsSpawnRate = 10;
+const herbivoreReproductionChance = 0.5;
+const carnivoreReproductionChance = 0.5;
+const carnivoreDecompositionChance = 0.5;
+
 function randInt(limit) {
 	return Math.floor(Math.random() * limit);
 }
@@ -87,13 +95,13 @@ function neighborhood(creature) {
 }
 
 let world = {
-	width: 40,
-	height: 20,
+	width: width,
+	height: height,
 }
 world.grid = new Array(world.width * world.height).fill().map(cell => {
 	let r = Math.random();
 	if (r < 0.5) return "empty";
-	else if (r < 0.75) return "plant";
+	else if (r < 0.85) return "plant";
 	else if (r < 0.95) return "herbivore";
 	else return "carnivore";
 
@@ -105,9 +113,12 @@ function doPlant() {
 		for (let x = 0; x < world.width; x++)
 			if (world.grid[x + y * world.width] == "empty")
 				emptyCells.push({x, y});
-	let target = randItem(emptyCells);
-	if (target)
-		world.grid[target.x + target.y * world.width] = "plant";
+	let target;
+	for (let i = 0; i < plantsSpawnRate; i++) {
+		target = randItem(emptyCells);
+		if (target)
+			world.grid[target.x + target.y * world.width] = "plant";
+	}
 }
 
 function doHerbivore(herbivore) {
@@ -117,7 +128,7 @@ function doHerbivore(herbivore) {
 		world.grid[herbivore.x + herbivore.y * world.width] = "empty";
 		world.grid[target.x + target.y * world.width] = "herbivore";
 		// birth
-		if (Math.random() < 0.5) {
+		if (Math.random() < herbivoreReproductionChance) {
 			neighbors = neighborhood(target);
 			if (neighbors.empty.length) {
 				target = randItem(neighbors.empty);
@@ -138,7 +149,7 @@ function doCarnivore(carnivore) {
 		world.grid[carnivore.x + carnivore.y * world.width] = "empty";
 		world.grid[target.x + target.y * world.width] = "carnivore";
 		// birth
-		if (Math.random() < 0.5) {
+		if (Math.random() < carnivoreReproductionChance) {
 			neighbors = neighborhood(target);
 			if (neighbors.empty.length) {
 				target = randItem(neighbors.empty);
@@ -150,7 +161,7 @@ function doCarnivore(carnivore) {
 		world.grid[carnivore.x + carnivore.y * world.width] = "empty";
 		world.grid[target.x + target.y * world.width] = "carnivore";
 		// birth
-		if (Math.random() < 0.5) {
+		if (Math.random() < carnivoreDecompositionChance) {
 			neighbors = neighborhood(target);
 			if (neighbors.empty.length) {
 				target = randItem(neighbors.empty);
@@ -212,7 +223,8 @@ let table = createTable(world);
 document.body.appendChild(table);
 function frame() {
 	requestAnimationFrame(frame);
-	step();
+	for (let i = 0; i < stepsPerFrame; i++)
+		step();
 	table.remove();
 	table = createTable(world);
 	document.body.appendChild(table);
